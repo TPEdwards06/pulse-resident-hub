@@ -6,6 +6,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { errMsg, must, rpc } from "@/lib/api";
 import { Panel, StaffTitle, btn } from "@/components/pulse/staff";
+import { useResidents } from "@/components/pulse/ResidentPicker";
 
 export const Route = createFileRoute("/staff/compose")({
   component: Compose,
@@ -19,8 +20,8 @@ const schema = z.object({
   body: z.string().max(2000, "Message is limited to 2000 characters"),
 });
 
-type Rule = { buildings: string[]; floors: string[]; unit_ids: string[]; renewal_statuses: string[]; lease_end_before: string };
-const EMPTY: Rule = { buildings: [], floors: [], unit_ids: [], renewal_statuses: [], lease_end_before: "" };
+type Rule = { buildings: string[]; floors: string[]; unit_ids: string[]; resident_ids: string[]; renewal_statuses: string[]; lease_end_before: string };
+const EMPTY: Rule = { buildings: [], floors: [], unit_ids: [], resident_ids: [], renewal_statuses: [], lease_end_before: "" };
 
 function toggle(list: string[], v: string) {
   return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
@@ -40,10 +41,12 @@ function Compose() {
   const { data: units = [] } = useQuery({ queryKey: ["units"], queryFn: () => must(supabase.from("units").select("*").order("unit_number")) });
   const buildings = [...new Set(units.map((u) => u.building))];
   const floors = [...new Set(units.map((u) => String(u.floor)))].sort();
+  const { data: residents = [] } = useResidents();
+  const [who, setWho] = useState("");
 
   const ruleJson = useMemo(() => {
     const r: Record<string, unknown> = {};
-    for (const k of ["buildings", "floors", "unit_ids", "renewal_statuses"] as const) if (rule[k].length) r[k] = rule[k];
+    for (const k of ["buildings", "floors", "unit_ids", "resident_ids", "renewal_statuses"] as const) if (rule[k].length) r[k] = rule[k];
     if (rule.lease_end_before) r["lease_end_before"] = rule.lease_end_before;
     return r;
   }, [rule]);
@@ -52,10 +55,14 @@ function Compose() {
     if (rule.buildings.length) parts.push(`Building ${rule.buildings.join("/")}`);
     if (rule.floors.length) parts.push(`Floor ${rule.floors.join("/")}`);
     if (rule.unit_ids.length) parts.push(units.filter((u) => rule.unit_ids.includes(u.id)).map((u) => u.unit_number).join(", "));
+    if (rule.resident_ids.length) {
+      const names = residents.filter((r) => rule.resident_ids.includes(r.id)).map((r) => r.full_name);
+      parts.push(names.length <= 3 ? names.join(", ") : `${names.length} selected residents`);
+    }
     if (rule.renewal_statuses.length) parts.push(`Renewal: ${rule.renewal_statuses.join("/")}`);
     if (rule.lease_end_before) parts.push(`Lease ends before ${rule.lease_end_before}`);
     return parts.length ? parts.join(" · ") : "All residents";
-  }, [rule, units]);
+  }, [rule, units, residents]);
 
   // Debounced live recipient count.
   const [debounced, setDebounced] = useState(ruleJson);
@@ -111,6 +118,35 @@ function Compose() {
           <Panel title="Audience">
             <div className="grid gap-3 font-type text-sm">
               <button type="button" onClick={() => setRule(EMPTY)} className={chip(JSON.stringify(ruleJson) === "{}")}>All residents</button>
+              <div>
+                Specific residents
+                {rule.resident_ids.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {residents.filter((r) => rule.resident_ids.includes(r.id)).map((r) => (
+                      <button key={r.id} type="button" onClick={() => setRule({ ...rule, resident_ids: toggle(rule.resident_ids, r.id) })}
+                        className="rounded-full bg-black px-3 py-1 font-type text-xs text-white" title="Remove">
+                        {r.full_name} · {r.units?.unit_number} ✕
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input className="field mt-1" placeholder="Search name or unit (e.g. John, A201)" value={who} onChange={(e) => setWho(e.target.value)} />
+                {who.trim() && (
+                  <ul className="mt-1 max-h-48 overflow-y-auto rounded-xl border border-black/10">
+                    {residents
+                      .filter((r) => `${r.full_name} ${r.units?.unit_number ?? ""}`.toLowerCase().includes(who.trim().toLowerCase()))
+                      .slice(0, 8)
+                      .map((r) => (
+                        <li key={r.id}>
+                          <button type="button" onClick={() => { setRule({ ...rule, resident_ids: toggle(rule.resident_ids, r.id) }); setWho(""); }}
+                            className="flex w-full justify-between px-3 py-1.5 text-left hover:bg-cream">
+                            <span>{r.full_name}</span><span className="text-xs text-black/55">{r.units?.unit_number}{rule.resident_ids.includes(r.id) ? " ✓" : ""}</span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </div>
               <div>Building<div className="mt-1 flex flex-wrap gap-1.5">{buildings.map((b) => <button key={b} type="button" onClick={() => setRule({ ...rule, buildings: toggle(rule.buildings, b) })} className={chip(rule.buildings.includes(b))}>{b}</button>)}</div></div>
               <div>Floor<div className="mt-1 flex flex-wrap gap-1.5">{floors.map((f) => <button key={f} type="button" onClick={() => setRule({ ...rule, floors: toggle(rule.floors, f) })} className={chip(rule.floors.includes(f))}>{f}</button>)}</div></div>
               <div>Renewal status<div className="mt-1 flex flex-wrap gap-1.5">{STATUSES.map(([v, l]) => <button key={v} type="button" onClick={() => setRule({ ...rule, renewal_statuses: toggle(rule.renewal_statuses, v) })} className={chip(rule.renewal_statuses.includes(v))}>{l}</button>)}</div></div>
@@ -127,7 +163,7 @@ function Compose() {
           </Panel>
           <div className="rounded-[1.4rem] bg-black p-5 text-white">
             <p className="font-type text-xs uppercase tracking-wide text-white/60">{label}</p>
-            <p className="mt-1 font-hand text-3xl">{count.isFetching ? "…" : count.data ?? 0} residents will receive this</p>
+            <p className="mt-1 font-hand text-3xl">{count.isFetching ? "…" : `${count.data ?? 0} ${count.data === 1 ? "resident" : "residents"}`} will receive this</p>
             <button className={`${btn} mt-4 w-full`} disabled={send.isPending || !title.trim() || !count.data} onClick={() => send.mutate()}>
               {when ? "Schedule message" : "Send now"}
             </button>

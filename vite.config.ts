@@ -6,8 +6,8 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// PAGES_BASE=/pulse-resident-hub/ builds a static single-page app for GitHub Pages (npm run build:pages).
-const pagesBase = process.env.PAGES_BASE;
+// PAGES_BASE=/pulse-resident-hub/ builds a static single-page app for GitHub Pages (see scripts/deploy-pages.sh).
+const pagesBase = process.env["PAGES_BASE"];
 
 export default defineConfig({
   tanstackStart: {
