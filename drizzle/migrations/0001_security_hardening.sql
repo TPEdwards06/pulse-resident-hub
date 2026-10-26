@@ -213,8 +213,8 @@ begin
   insert into public.deliveries(message_id, resident_id, delivered_at)
   select m.id, r, m.scheduled_at from public.messages m cross join lateral public.audience_residents(m.audience_rule) r;
 
-  update public.deliveries set seen_at = delivered_at + interval '2 hours' where abs(hashtext(id::text)) % 100 < 62;
-  update public.deliveries d set acked_at = seen_at + interval '5 minutes'
+  update public.deliveries set seen_at = least(delivered_at + (3 + abs(hashtext(id::text || 't')) % 900) * interval '1 minute', now() - interval '10 minutes') where abs(hashtext(id::text)) % 100 < 62;
+  update public.deliveries d set acked_at = least(seen_at + interval '5 minutes', now())
   from public.messages m where m.id = d.message_id and m.requires_ack and d.seen_at is not null and abs(hashtext(d.id::text || 'a')) % 100 < 70;
   update public.deliveries d set seen_at = case when m.title like 'Yoga%' then d.delivered_at + interval '1 hour' else null end, acked_at = null
   from public.messages m, public.profiles p
