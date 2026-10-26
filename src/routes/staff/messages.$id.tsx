@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { errMsg, must, rpc } from "@/lib/api";
-import { fmtDateTime } from "@/lib/format";
+import { LIVE_MS, fmtDateTime } from "@/lib/format";
 import { Panel, ReachBar, StaffTitle, btn, td, th } from "@/components/pulse/staff";
 
 export const Route = createFileRoute("/staff/messages/$id")({
@@ -18,7 +18,7 @@ function MessageDetail() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unseen" | "unconfirmed">("unseen");
   const msg = useQuery({ queryKey: ["message", id], queryFn: () => must(supabase.from("messages").select("*").eq("id", id).single()) });
-  const rec = useQuery({ queryKey: ["recipients", id], queryFn: () => rpc<Recipient[]>("message_recipients", { _message_id: id }) });
+  const rec = useQuery({ queryKey: ["recipients", id], queryFn: () => rpc<Recipient[]>("message_recipients", { _message_id: id }), refetchInterval: LIVE_MS });
   const resend = useMutation({
     mutationFn: () => rpc<number>("resend_reminder", { _message_id: id }),
     onSuccess: (n) => { toast.success(n ? `Reminder sent to ${n} resident${n === 1 ? "" : "s"} who haven't seen it` : "Everyone has seen it"); qc.invalidateQueries({ queryKey: ["msg-stats"] }); },

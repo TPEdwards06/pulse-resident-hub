@@ -33,7 +33,7 @@ export type FeedItem = {
 export const isDone = (m: FeedItem) => (m.requires_ack ? !!m.acked_at : !!m.seen_at);
 
 export const useFeed = () =>
-  useQuery({ queryKey: ["feed"], queryFn: () => rpc<FeedItem[]>("my_feed") });
+  useQuery({ queryKey: ["feed"], queryFn: () => rpc<FeedItem[]>("my_feed"), refetchInterval: 15_000 });
 
 export function useFeedActions() {
   const qc = useQueryClient();

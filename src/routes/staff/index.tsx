@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { errMsg, must, rpc } from "@/lib/api";
-import { daysUntil, leftLabel } from "@/lib/format";
+import { LIVE_MS, daysUntil, leftLabel } from "@/lib/format";
 import type { MsgStat, RenewalRow } from "@/lib/staff-types";
 import { Panel, ReachBar, Stat, StaffTitle, btn, btnGhost } from "@/components/pulse/staff";
 
@@ -11,10 +11,16 @@ export const Route = createFileRoute("/staff/")({
   component: Overview,
 });
 
+const RESET_WARNING = [
+  "Restore the original demo data?",
+  "",
+  "This permanently deletes ALL message history and read/confirmation records, plus any packages, charges, bookings and FAQ edits made during the demo.",
+].join("\n");
+
 function Overview() {
   const qc = useQueryClient();
-  const stats = useQuery({ queryKey: ["msg-stats"], queryFn: () => rpc<MsgStat[]>("message_stats") });
-  const board = useQuery({ queryKey: ["renewal-board"], queryFn: () => rpc<RenewalRow[]>("renewal_board") });
+  const stats = useQuery({ queryKey: ["msg-stats"], queryFn: () => rpc<MsgStat[]>("message_stats"), refetchInterval: LIVE_MS });
+  const board = useQuery({ queryKey: ["renewal-board"], queryFn: () => rpc<RenewalRow[]>("renewal_board"), refetchInterval: LIVE_MS });
   const pending = useQuery({ queryKey: ["pending"], queryFn: () => rpc<unknown[]>("pending_residents") });
   const pkgs = useQuery({
     queryKey: ["staff-packages-waiting"],
@@ -47,7 +53,7 @@ function Overview() {
           <div className="flex flex-wrap gap-2">
             <button className={btn} disabled={reminders.isPending} onClick={() => reminders.mutate()}>Run daily reminders</button>
             <button className={btnGhost} disabled={reset.isPending}
-              onClick={() => confirm("Restore the original demo data? Everything changed during the demo will be replaced.") && reset.mutate()}>
+              onClick={() => confirm(RESET_WARNING) && reset.mutate()}>
               Reset demo data
             </button>
           </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { errMsg, must, rpc } from "@/lib/api";
-import { daysUntil, fmtDate, leftLabel, money } from "@/lib/format";
+import { LIVE_MS, daysUntil, fmtDate, leftLabel, money } from "@/lib/format";
 import type { RenewalRow } from "@/lib/staff-types";
 import { Panel, StaffTitle, btn, btnGhost, td, th } from "@/components/pulse/staff";
 
@@ -16,7 +16,7 @@ const STATUS = { undecided: "Undecided", renewing: "Renewing", not_renewing: "No
 
 function Renewals() {
   const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({ queryKey: ["renewal-board"], queryFn: () => rpc<RenewalRow[]>("renewal_board") });
+  const { data = [], isLoading } = useQuery({ queryKey: ["renewal-board"], queryFn: () => rpc<RenewalRow[]>("renewal_board"), refetchInterval: LIVE_MS });
   const [editing, setEditing] = useState<RenewalRow | null>(null);
   const [rent, setRent] = useState("");
   const [expires, setExpires] = useState("");

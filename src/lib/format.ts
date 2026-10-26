@@ -33,4 +33,10 @@ export function leftLabel(days: number | null) {
   return days === 0 ? "due today" : `${days}d left`;
 }
 
+// Staff pages poll so read receipts show up without a reload.
+export const LIVE_MS = 10_000;
+
+export const fmtMinutes = (m: number | null) =>
+  m == null ? "—" : m < 1 ? "< 1 min" : m < 60 ? `${Math.round(m)} min` : m < 1440 ? `${(m / 60).toFixed(1)} h` : `${(m / 1440).toFixed(1)} days`;
+
 export const pct = (a: number, b: number) => (b === 0 ? 0 : Math.round((a / b) * 100));

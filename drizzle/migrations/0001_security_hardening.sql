@@ -380,3 +380,26 @@ begin
   return new;
 end $$;
 revoke execute on function public.trg_package_notify() from public, anon, authenticated;
+
+-- 13. Message history stats: sender name and median minutes from delivery to first open.
+drop function if exists public.message_stats(boolean);
+create function public.message_stats(_include_personal boolean default false)
+returns table(id uuid, title text, category public.msg_category, priority public.msg_priority, requires_ack boolean, audience_label text,
+              scheduled_at timestamptz, parent_message_id uuid, is_personal boolean, sent_by text,
+              delivered int, seen int, acked int, median_open_minutes numeric)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_staff() then raise exception 'Not authorized'; end if;
+  return query
+    select m.id, m.title, m.category, m.priority, m.requires_ack, m.audience_label, m.scheduled_at, m.parent_message_id, m.is_personal,
+           coalesce(s.full_name, 'Pulse (automatic)'),
+           count(d.id)::int, count(d.seen_at)::int, count(d.acked_at)::int,
+           round((percentile_cont(0.5) within group (order by extract(epoch from (d.seen_at - d.delivered_at)) / 60))::numeric, 1)
+    from public.messages m
+    left join public.profiles s on s.id = m.created_by
+    left join public.deliveries d on d.message_id = m.id
+    where _include_personal or not m.is_personal
+    group by m.id, s.full_name order by m.scheduled_at desc limit 1000;
+end $$;
+revoke execute on function public.message_stats(boolean) from public, anon;
+grant execute on function public.message_stats(boolean) to authenticated;

@@ -54,7 +54,9 @@ export function brokeredPreviewStorage(): PreviewAuthStorage | undefined {
   // detached frame has no parent and not every browser implements ancestorOrigins.
   const parentWindow = window.parent as Window | null;
   const framed = parentWindow !== null && parentWindow !== window;
-  if (!projectId || !framed) return localStorage;
+  // Pulse: keep each login per browser tab, so a staff tab and a resident tab can be open
+  // side by side (with shared localStorage, logging in as a resident silently replaced the staff session).
+  if (!projectId || !framed) return sessionStorage;
 
   // Post only to the real editor ancestor, validated as a Lovable origin, so the
   // session token can never reach an untrusted embedder.

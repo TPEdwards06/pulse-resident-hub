@@ -1,6 +1,6 @@
 export type MsgStat = {
   id: string; title: string; category: string; priority: string; requires_ack: boolean; audience_label: string | null;
-  scheduled_at: string; parent_message_id: string | null; is_personal: boolean; delivered: number; seen: number; acked: number;
+  scheduled_at: string; parent_message_id: string | null; is_personal: boolean; sent_by: string; delivered: number; seen: number; acked: number; median_open_minutes: number | null;
 };
 export type RenewalRow = {
   resident_id: string; full_name: string; unit_number: string; lease_end: string | null; renewal_status: "undecided" | "renewing" | "not_renewing";
