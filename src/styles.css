@@ -11,6 +11,7 @@
   --font-type: "Courier Prime", "Courier New", ui-monospace, monospace;
   --color-cream: var(--cream);
   --color-amber-pill: var(--amber-pill);
+  --color-desk: var(--desk);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -62,6 +63,7 @@
   --radius: 1rem;
   --cream: #fce8d8;
   --amber-pill: #cc7a0a;
+  --desk: #2b2622;
   --background: #fce8d8;
   --foreground: oklch(0.22 0.02 50);
   --card: oklch(1 0 0);

@@ -4,15 +4,20 @@ import type { ReactNode } from "react";
 // Visual language from the Pulse mockup: one cream background, white rounded cards,
 // handwritten headings, typewriter-serif body, amber accents.
 
+// On a real phone the app is full-screen cream. On wider screens it sits in a phone
+// frame on a darker backdrop so the "phone" reads as the product.
 export function PhoneFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-cream sm:flex sm:items-start sm:justify-center sm:py-8">
-      <div className="mx-auto w-full max-w-[430px] sm:rounded-[3.25rem] sm:border-[11px] sm:border-black sm:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.45)]">
+    <div className="min-h-screen bg-cream sm:flex sm:flex-col sm:items-center sm:bg-desk sm:py-8">
+      <div className="mx-auto w-full max-w-[430px] sm:rounded-[3.25rem] sm:border-[11px] sm:border-black sm:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] sm:ring-1 sm:ring-white/15">
         <div className="relative min-h-screen bg-cream sm:min-h-[860px] sm:overflow-hidden sm:rounded-[2.6rem]">
           <div className="pointer-events-none absolute left-1/2 top-0 hidden h-7 w-36 -translate-x-1/2 rounded-b-2xl bg-black sm:block" />
           <div className="px-5 pb-8 pt-6 sm:pt-10">{children}</div>
         </div>
       </div>
+      <p className="mt-6 hidden text-center font-hand text-xl text-amber-pill sm:block">
+        The One-Stop Shop for Student Housing Complexes.
+      </p>
     </div>
   );
 }
@@ -100,5 +105,5 @@ export function Loading() {
 }
 
 export const Tagline = () => (
-  <p className="mt-6 text-center font-hand text-lg text-amber-ink">The One-Stop Shop for Student Housing Complexes.</p>
+  <p className="mt-6 text-center font-hand text-lg text-amber-ink sm:hidden">The One-Stop Shop for Student Housing Complexes.</p>
 );
