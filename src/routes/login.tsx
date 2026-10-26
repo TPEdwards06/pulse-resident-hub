@@ -52,7 +52,7 @@ function Login() {
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
-      options: { data: { full_name: parsed.data.name || undefined }, emailRedirectTo: window.location.origin },
+      options: { data: { full_name: parsed.data.name || undefined }, emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
     });
     setBusy(false);
     if (error) return setMsg({ ok: false, text: error.message });
