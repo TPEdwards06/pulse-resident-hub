@@ -63,7 +63,7 @@ function Login() {
   return (
     <PhoneFrame>
       <div className="flex justify-center pt-4"><PulseLogo /></div>
-      <p className="mt-1 text-center font-type text-xs">Westside Commons</p>
+      <p className="mt-1 text-center font-type text-xs">Union on San Antonio</p>
 
       <Card className="mt-6">
         <h2 className="text-center font-hand text-2xl text-amber-ink">Try the demo</h2>
@@ -72,7 +72,7 @@ function Login() {
             Demo as Resident ({DEMO_ACCOUNTS.resident.name})
           </AmberButton>
           <OutlineButton disabled={busy} onClick={() => signIn(DEMO_ACCOUNTS.staff.email, DEMO_PASSWORD)}>
-            Demo as Staff (Jordan – Leasing)
+            Demo as Staff (Jane Doe – Leasing)
           </OutlineButton>
         </div>
       </Card>

@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Pulse — Westside Commons" },
+      { title: "Pulse — Union on San Antonio" },
       { name: "description", content: "The One-Stop Shop for Student Housing Complexes." },
       
       { property: "og:title", content: "Pulse" },

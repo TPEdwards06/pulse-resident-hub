@@ -32,7 +32,7 @@ function StaffLayout() {
       <aside className="border-b border-black/10 bg-white/60 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-b-0 md:border-r">
         <div className="flex items-center justify-between px-5 py-4 md:block">
           <PulseLogo size="md" />
-          <p className="font-type text-[11px] text-black/60 md:mt-1">Westside Commons · Staff</p>
+          <p className="font-type text-[11px] text-black/60 md:mt-1">Union on San Antonio · Staff</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:overflow-visible">
           {NAV.map((n) => (

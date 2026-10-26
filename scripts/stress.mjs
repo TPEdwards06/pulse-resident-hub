@@ -45,16 +45,16 @@ function central(daysAhead, hour) {
 }
 
 const main = async () => {
-  console.log("Logging in 19 residents + Alex + staff…");
-  const staff = await login("jordan@pulse.demo", DEMO_PW);
-  const alex = await login("alex@pulse.demo", DEMO_PW);
+  console.log("Logging in 19 residents + John + staff…");
+  const staff = await login("jane@pulse.demo", DEMO_PW);
+  const john = await login("john@pulse.demo", DEMO_PW);
   const tokens = await Promise.all(RESIDENTS.map((e) => login(e, STRESS_PW)));
-  const all = [alex, ...tokens];
+  const all = [john, ...tokens];
   const me = await Promise.all(all.map((t) => api(t, "profiles?select=id,email")));
   const pid = me.map((r) => r.data[0].id);
 
   // 1. Double-booking race: 20 residents grab the same room + slot at the same instant.
-  const rooms = (await api(alex, "rooms?select=id,name&order=name")).data;
+  const rooms = (await api(john, "rooms?select=id,name&order=name")).data;
   const room = rooms.find((r) => r.name === "Conference Room").id;
   const slot = { starts_at: central(5, 15), ends_at: central(5, 16) };
   const race = await Promise.all(all.map((t, i) => api(t, "reservations", { method: "POST", body: { room_id: room, resident_id: pid[i], ...slot }, prefer: "return=minimal" })));
@@ -82,22 +82,22 @@ const main = async () => {
   check("Can't book on behalf of another resident", !someoneElse.ok, someoneElse.data?.message);
 
   // 3. Cross-resident tampering.
-  const aFeed = (await rpc(alex, "my_feed")).data;
+  const aFeed = (await rpc(john, "my_feed")).data;
   const steal = await Promise.all([
     rpc(m, "ack_message", { _delivery_id: aFeed[0].delivery_id }),
     rpc(m, "mark_seen", { _delivery_id: aFeed[1].delivery_id }),
   ]);
-  const aFeed2 = (await rpc(alex, "my_feed")).data;
+  const aFeed2 = (await rpc(john, "my_feed")).data;
   const untouched = aFeed2.find((x) => x.delivery_id === aFeed[0].delivery_id).acked_at === aFeed[0].acked_at
     && aFeed2.find((x) => x.delivery_id === aFeed[1].delivery_id).seen_at === aFeed[1].seen_at;
-  check("Another resident can't mark Alex's messages read", untouched && steal.every((r) => r.ok));
-  const aCharges = (await api(alex, "charges?select=id,status&status=eq.due")).data;
+  check("Another resident can't mark John's messages read", untouched && steal.every((r) => r.ok));
+  const aCharges = (await api(john, "charges?select=id,status&status=eq.due")).data;
   await rpc(m, "pay_charge", { _charge_id: aCharges[0].id });
-  const still = (await api(alex, `charges?select=status&id=eq.${aCharges[0].id}`)).data[0].status;
-  check("Another resident can't pay/clear Alex's charge", still === "due");
-  const aRes = (await api(alex, `reservations?select=id&resident_id=eq.${pid[0]}`)).data;
+  const still = (await api(john, `charges?select=status&id=eq.${aCharges[0].id}`)).data[0].status;
+  check("Another resident can't pay/clear John's charge", still === "due");
+  const aRes = (await api(john, `reservations?select=id&resident_id=eq.${pid[0]}`)).data;
   const del = await api(m, `reservations?id=eq.${aRes[0]?.id}`, { method: "DELETE", prefer: "return=representation" });
-  check("Another resident can't cancel Alex's booking", Array.isArray(del.data) && del.data.length === 0);
+  check("Another resident can't cancel John's booking", Array.isArray(del.data) && del.data.length === 0);
   const peek = await Promise.all(["profiles?select=email", "charges?select=resident_id", "packages?select=resident_id", "renewal_offers?select=resident_id", "deliveries?select=id", "messages?select=id"].map((p) => api(m, p)));
   const leaks = peek.map((r, i) => [i, new Set((r.data ?? []).map((x) => x.resident_id ?? x.email ?? x.id)).size]);
   check("Resident sees only own rows in every table", peek[0].data.length === 1 && peek[1].data.every((x) => x.resident_id === mp) && peek[2].data.every((x) => x.resident_id === mp) && peek[3].data.every((x) => x.resident_id === mp) && peek[4].data.length === 0 && peek[5].data.length === 0, JSON.stringify(leaks));
@@ -146,9 +146,9 @@ const main = async () => {
   check("Staff send rate limit kicks in", !!blocked && /limit/i.test(blocked), `blocked after ${n} more sends: ${blocked}`);
 
   // 8. FAQ view inflation.
-  const faq = (await api(alex, "faqs?select=id,view_count&limit=1")).data[0];
-  await Promise.all(Array.from({ length: 50 }, () => rpc(alex, "view_faq", { _id: faq.id })));
-  const after = (await api(alex, `faqs?select=view_count&id=eq.${faq.id}`)).data[0].view_count;
+  const faq = (await api(john, "faqs?select=id,view_count&limit=1")).data[0];
+  await Promise.all(Array.from({ length: 50 }, () => rpc(john, "view_faq", { _id: faq.id })));
+  const after = (await api(john, `faqs?select=view_count&id=eq.${faq.id}`)).data[0].view_count;
   check("50 rapid views from one user count at most once", after - faq.view_count <= 1, `${faq.view_count} → ${after}`);
 
   const failed = results.filter((r) => !r.ok);

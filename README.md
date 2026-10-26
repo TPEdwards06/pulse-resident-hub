@@ -8,7 +8,7 @@ resident (packages, payments, renewal deadlines and price changes), and tracks w
 
 - **Live demo (residents):** https://tpedwards06.github.io/pulse-resident-hub/
 - **Live demo (leasing staff):** https://tpedwards06.github.io/pulse-resident-hub/staff
-- Use the one-click **Demo as Resident (Alex Rivera)** / **Demo as Staff (Jordan – Leasing)** buttons on the login page.
+- Use the one-click **Demo as Resident (John Doe)** / **Demo as Staff (Jane Doe – Leasing)** buttons on the login page.
 - Staff can restore the original demo data with **Reset demo data** on the staff overview.
 
 ## Features

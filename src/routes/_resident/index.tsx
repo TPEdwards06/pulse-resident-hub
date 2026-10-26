@@ -46,7 +46,7 @@ function Home() {
       </div>
 
       <dl className="mt-1 space-y-0.5 font-type text-[12.5px] leading-snug text-black">
-        <div><dt className="inline font-bold">Resident at:</dt> <dd className="inline">Westside Commons{me?.profile?.units ? ` · ${me.profile.units.unit_number}` : ""}</dd></div>
+        <div><dt className="inline font-bold">Resident at:</dt> <dd className="inline">Union on San Antonio{me?.profile?.units ? ` · ${me.profile.units.unit_number}` : ""}</dd></div>
         <div><dt className="inline font-bold">Next Payment Due:</dt> <dd className="inline">{nextDue ? fmtDate(nextDue.due_date) : "Nothing due"}</dd></div>
         <div><dt className="inline font-bold">Notifications:</dt> <dd className="inline">{unread.length}</dd></div>
       </dl>

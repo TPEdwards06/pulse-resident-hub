@@ -146,13 +146,13 @@ create or replace function public.seed_demo() returns void language plpgsql secu
 begin
   perform set_config('pulse.seeding', 'on', true);
 
-  insert into public.staff_emails values ('jordan@pulse.demo') on conflict do nothing;
-  insert into public.profiles(email, full_name) values ('jordan@pulse.demo', 'Jordan – Leasing') on conflict (email) do nothing;
+  insert into public.staff_emails values ('jane@pulse.demo') on conflict do nothing;
+  insert into public.profiles(email, full_name) values ('jane@pulse.demo', 'Jane Doe') on conflict (email) do nothing;
 
   insert into public.profiles(email, full_name, unit_id, phone, lease_end, renewal_status, current_rent)
   select v.email, v.name, (select id from public.units where unit_number = v.unit), v.phone, current_date + v.days, v.status::public.renewal_status, v.rent
   from (values
-   ('alex@pulse.demo','Alex Rivera','A201','512-555-0142', 81,'undecided',1150),
+   ('john@pulse.demo','John Doe','A201','512-555-0142', 81,'undecided',1150),
    ('marcus.lee@pulse.demo','Marcus Lee','A101','512-555-0101', 12,'undecided',1085),
    ('priya.n@pulse.demo','Priya Natarajan','A102','512-555-0102', 25,'renewing',1120),
    ('diego.r@pulse.demo','Diego Ramirez','A202','512-555-0103', 40,'undecided',1150),
@@ -178,9 +178,9 @@ begin
 
   insert into public.renewal_offers(resident_id, current_rent, offer_rent, offer_expires)
   select p.id, p.current_rent, round(p.current_rent * 1.04), least(p.lease_end - 45, current_date + 30)
-  from public.profiles p where p.unit_id is not null and p.lease_end < current_date + 160 and p.email like '%@pulse.demo' and p.email <> 'alex@pulse.demo';
+  from public.profiles p where p.unit_id is not null and p.lease_end < current_date + 160 and p.email like '%@pulse.demo' and p.email <> 'john@pulse.demo';
   insert into public.renewal_offers(resident_id, current_rent, offer_rent, offer_expires)
-  select id, 1150, 1195, current_date + 21 from public.profiles where email = 'alex@pulse.demo';
+  select id, 1150, 1195, current_date + 21 from public.profiles where email = 'john@pulse.demo';
 
   insert into public.rooms(name, location, capacity)
   select * from (values ('Study Room 1', 'Building A · 2nd floor', 4), ('Study Room 2', 'Building B · Lobby level', 6), ('Conference Room', 'Clubhouse', 10)) v(n, l, c)
@@ -200,7 +200,7 @@ begin
 
   insert into public.messages(title, body, category, priority, requires_ack, audience_rule, audience_label, scheduled_at, created_by, created_at)
   select v.title, v.body, v.cat::public.msg_category, v.pri::public.msg_priority, v.ack, v.rule::jsonb, v.label,
-    now() - (v.hrs || ' hours')::interval, (select id from public.profiles where email = 'jordan@pulse.demo'), now() - (v.hrs || ' hours')::interval
+    now() - (v.hrs || ' hours')::interval, (select id from public.profiles where email = 'jane@pulse.demo'), now() - (v.hrs || ' hours')::interval
   from (values
    ('Yoga Class at 9:30 AM on ' || to_char(current_date + 4, 'FMMM/FMDD'), 'Join us on the rooftop deck for a free beginner-friendly yoga class. Mats provided — bring water!', 'event', 'normal', false, '{}', 'All residents', 72),
    ('Fire Drill set for 3:25 PM on ' || to_char(current_date + 6, 'FMMM/FMDD'), 'The fire alarm will sound for approximately 10 minutes. Please exit using the nearest stairwell and gather in the north courtyard. Do not use elevators.', 'safety', 'urgent', true, '{}', 'All residents', 30),
@@ -218,7 +218,7 @@ begin
   from public.messages m where m.id = d.message_id and m.requires_ack and d.seen_at is not null and abs(hashtext(d.id::text || 'a')) % 100 < 70;
   update public.deliveries d set seen_at = case when m.title like 'Yoga%' then d.delivered_at + interval '1 hour' else null end, acked_at = null
   from public.messages m, public.profiles p
-  where m.id = d.message_id and p.id = d.resident_id and p.email = 'alex@pulse.demo';
+  where m.id = d.message_id and p.id = d.resident_id and p.email = 'john@pulse.demo';
 
   insert into public.charges(resident_id, description, amount, due_date, status, paid_at)
   select id, 'Rent – ' || to_char(date_trunc('month', current_date), 'FMMonth YYYY'), current_rent, date_trunc('month', current_date)::date, 'paid', date_trunc('month', current_date) + interval '1 day'
@@ -226,12 +226,12 @@ begin
 
   insert into public.packages(resident_id, carrier, note, arrived_at, picked_up_at)
   select p.id, v.carrier, v.note, now() - (v.d || ' days')::interval, now() - (v.d || ' days')::interval + interval '6 hours'
-  from (values ('alex@pulse.demo','USPS','Small parcel', 9), ('alex@pulse.demo','Amazon','Box', 16), ('priya.n@pulse.demo','DHL','Box', 4)) v(email, carrier, note, d)
+  from (values ('john@pulse.demo','USPS','Small parcel', 9), ('john@pulse.demo','Amazon','Box', 16), ('priya.n@pulse.demo','DHL','Box', 4)) v(email, carrier, note, d)
   join public.profiles p on p.email = v.email;
 
   insert into public.reservations(room_id, resident_id, starts_at, ends_at)
   select r.id, p.id, ((current_date + v.d) + (v.h || ' hours')::interval) at time zone 'America/Chicago', ((current_date + v.d) + ((v.h + 1) || ' hours')::interval) at time zone 'America/Chicago'
-  from (values ('Study Room 1','priya.n@pulse.demo',1,14), ('Study Room 1','diego.r@pulse.demo',1,18), ('Study Room 2','ava.t@pulse.demo',1,10), ('Conference Room','ethan.c@pulse.demo',2,19), ('Study Room 1','alex@pulse.demo',2,16)) v(room, email, d, h)
+  from (values ('Study Room 1','priya.n@pulse.demo',1,14), ('Study Room 1','diego.r@pulse.demo',1,18), ('Study Room 2','ava.t@pulse.demo',1,10), ('Conference Room','ethan.c@pulse.demo',2,19), ('Study Room 1','john@pulse.demo',2,16)) v(room, email, d, h)
   join public.rooms r on r.name = v.room join public.profiles p on p.email = v.email;
 
   perform set_config('pulse.seeding', 'off', true);
@@ -239,17 +239,17 @@ begin
   -- These fire the normal notification triggers.
   insert into public.charges(resident_id, description, amount, due_date)
   select id, 'Rent – ' || to_char(date_trunc('month', current_date) + interval '1 month', 'FMMonth YYYY'), current_rent, (date_trunc('month', current_date) + interval '1 month')::date
-  from public.profiles where email in ('alex@pulse.demo','marcus.lee@pulse.demo','olivia.m@pulse.demo','diego.r@pulse.demo');
+  from public.profiles where email in ('john@pulse.demo','marcus.lee@pulse.demo','olivia.m@pulse.demo','diego.r@pulse.demo');
   insert into public.charges(resident_id, description, amount, due_date)
-  select id, 'Parking permit', 45, (date_trunc('month', current_date) + interval '1 month')::date from public.profiles where email = 'alex@pulse.demo';
+  select id, 'Parking permit', 45, (date_trunc('month', current_date) + interval '1 month')::date from public.profiles where email = 'john@pulse.demo';
 
   insert into public.packages(resident_id, carrier, note, arrived_at)
   select p.id, v.carrier, v.note, now() - (v.hrs || ' hours')::interval
-  from (values ('alex@pulse.demo','Amazon','Medium box', 5), ('alex@pulse.demo','UPS','Envelope', 26),
+  from (values ('john@pulse.demo','Amazon','Medium box', 5), ('john@pulse.demo','UPS','Envelope', 26),
                ('jamal.w@pulse.demo','FedEx','Large box', 3), ('mia.j@pulse.demo','USPS','Small parcel', 30), ('ryan.s@pulse.demo','Amazon','Bag', 8)) v(email, carrier, note, hrs)
   join public.profiles p on p.email = v.email;
 
-  update public.renewal_offers set offer_rent = 1225 where resident_id = (select id from public.profiles where email = 'alex@pulse.demo');
+  update public.renewal_offers set offer_rent = 1225 where resident_id = (select id from public.profiles where email = 'john@pulse.demo');
 end $$;
 
 create or replace function public.reset_demo() returns void language plpgsql security definer set search_path = public as $$
