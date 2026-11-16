@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Pulse</title>
+<script>
+  var v = location.pathname.indexOf("/pulse-resident-hub/v1.0/") === 0 ? "v1.0/" : "";
+  fetch("/pulse-resident-hub/" + v + "index.html").then(function (r) { return r.text(); }).then(function (html) {
+    document.open(); document.write(html); document.close();
+  });
+</script>
